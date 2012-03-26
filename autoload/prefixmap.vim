@@ -114,6 +114,7 @@ endfunction
 function! s:prefixmap.create_key_mapping(command_name, bang, command_arg) " {{{2
   if self.prefix_key == ''
     echohl WarningMsg | echomsg s:create_error_message(':PrefixMapStart {prefix-key} is not executed.') | echohl None
+    return
   endif
 
   let map_arguments_pattern = '\%(' .
