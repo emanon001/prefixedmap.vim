@@ -44,7 +44,8 @@ endfunction
 function! s:prefixedmap.__init_variables__() " {{{3
   call extend(self, {
         \  'is_loaded': s:FALSE,
-        \  'prefix_key': ''
+        \  'prefix_key': '',
+        \  'sid': ''
         \ })
 endfunction
 
@@ -65,7 +66,6 @@ endfunction
 
 " Core {{{1
 
-
 function! s:prefixedmap.create_commands() " {{{2
   call self.create_block_commands()
   call self.create_map_commands()
@@ -80,10 +80,8 @@ function! s:prefixedmap.create_block_commands() " {{{2
 endfunction
 
 function! s:prefixedmap.set_prefix_key(prefix_key, sfile) " {{{3
-  let actual_prefix_key = a:prefix_key
-  if a:prefix_key =~# '^<SID>'
-    let actual_prefix_key = s:path_to_sid(a:sfile) . matchstr(a:prefix_key, '<SID>\zs.*$')
-  endif
+  let self.sid = s:path_to_sid(a:sfile)
+  let actual_prefix_key = self.expand_sid(a:prefix_key)
   let self.prefix_key = actual_prefix_key
 endfunction
 
@@ -117,17 +115,29 @@ function! s:prefixedmap.create_key_mapping(command_name, bang, command_arg) " {{
     return
   endif
 
-  " 1. P{map-command} {map-arguments} <Nop>
-  "    -> {map-command} {map-arguments} {prefix-key} <Nop>
-  " 2. P{map-command} {map-arguments} {lhs} {rhs}
-  "    -> {map-command} {map-arguments} {lhs} {rhs}
+  let [map_arguments, lhs, rhs] = self.parse_command_arg(a:command_arg)
+  execute a:command_name . a:bang map_arguments lhs rhs
+endfunction
+
+function! s:prefixedmap.parse_command_arg(command_arg)
   let map_arguments_pattern = '\%(' .
         \ join(['<buffer>', '<silent>', '<special>', '<script>', '<expr>', '<unique>'], '\|') .
         \ '\)'
-  let _ = matchlist(a:command_arg, '^\(\%('. map_arguments_pattern . '\s*\)*\)\(.*\)$')
-  execute a:command_name . a:bang _[1]
-        \ _[2] ==# '<Nop>' ? self.prefix_key . ' <Nop>'
-        \                  : self.prefix_key . _[2]
+  let arg_info = matchlist(a:command_arg, '^\(\%('. map_arguments_pattern . '\s*\)*\)\(\%(\%( \)\|\S\)*\)\s*\(.*\)$')
+
+  let map_arguments = arg_info[1]
+  if arg_info[2] ==# '<Nop>' && arg_info[3] == ''
+    " {map-arguments} <Nop>
+    " -> {map-arguments} {prefix-key} <Nop>
+    let lhs = self.prefix_key
+    let rhs = '<Nop>'
+  else
+    " {map-arguments} {lhs} {rhs}
+    " -> {map-arguments} {prefix-key}{lhs} {rhs}
+    let lhs = self.prefix_key . arg_info[2]
+    let rhs = self.expand_sid(arg_info[3])
+  endif
+  return [map_arguments, lhs, rhs]
 endfunction
 
 
@@ -159,6 +169,12 @@ function! s:parse_script_names() "{{2
   let infos = split(_, '\n')
   let infos = map(infos, 'matchlist(v:val, ''^\s*\(\d*\):\s*\(.*\)$'')[1:2]')
   return map(infos, '{"snr": v:val[0], "path": v:val[1]}')
+endfunction
+
+
+function! s:prefixedmap.expand_sid(val) " {{{2
+  " XXX:
+  return substitute(a:val, '<SID>', self.sid, 'g')
 endfunction
 
 
