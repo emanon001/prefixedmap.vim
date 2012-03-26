@@ -32,16 +32,16 @@ lockvar! s:TRUE s:FALSE s:PLUGIN_NAME
 
 " Variables {{{1
 
-let s:prefixmap = {}
+let s:prefixedmap = {}
 
 
 " Preparation of initialization. {{{2
 
-function! s:prefixmap.__init__() " {{{3
+function! s:prefixedmap.__init__() " {{{3
   call self.__init_variables__()
 endfunction
 
-function! s:prefixmap.__init_variables__() " {{{3
+function! s:prefixedmap.__init_variables__() " {{{3
   call extend(self, {
         \  'is_loaded': s:FALSE,
         \  'prefix_key': ''
@@ -53,10 +53,10 @@ endfunction
 
 " Interface {{{1
 
-function! prefixmap#load() " {{{2
-  if !s:prefixmap.is_loaded
-    call s:prefixmap.create_commands()
-    let s:prefixmap.is_loaded = s:TRUE
+function! prefixedmap#load() " {{{2
+  if !s:prefixedmap.is_loaded
+    call s:prefixedmap.create_commands()
+    let s:prefixedmap.is_loaded = s:TRUE
   endif
 endfunction
 
@@ -66,20 +66,20 @@ endfunction
 " Core {{{1
 
 
-function! s:prefixmap.create_commands() " {{{2
+function! s:prefixedmap.create_commands() " {{{2
   call self.create_block_commands()
   call self.create_map_commands()
 endfunction
 
 
-function! s:prefixmap.create_block_commands() " {{{2
-  command! -nargs=1 PrefixMapStart
-        \ call s:prefixmap.set_prefix_key(<q-args>, expand('<sfile>'))
-  command! -nargs=0 PrefixMapEnd
-        \ call s:prefixmap.reset_prefix_key()
+function! s:prefixedmap.create_block_commands() " {{{2
+  command! -nargs=1 PrefixedMapStart
+        \ call s:prefixedmap.set_prefix_key(<q-args>, expand('<sfile>'))
+  command! -nargs=0 PrefixedMapEnd
+        \ call s:prefixedmap.reset_prefix_key()
 endfunction
 
-function! s:prefixmap.set_prefix_key(prefix_key, sfile) " {{{3
+function! s:prefixedmap.set_prefix_key(prefix_key, sfile) " {{{3
   let actual_prefix_key = a:prefix_key
   if a:prefix_key =~# '^<SID>'
     let actual_prefix_key = s:path_to_sid(a:sfile) . matchstr(a:prefix_key, '<SID>\zs.*$')
@@ -87,12 +87,12 @@ function! s:prefixmap.set_prefix_key(prefix_key, sfile) " {{{3
   let self.prefix_key = actual_prefix_key
 endfunction
 
-function! s:prefixmap.reset_prefix_key() " {{{3
+function! s:prefixedmap.reset_prefix_key() " {{{3
   let self.prefix_key = ''
 endfunction
 
 
-function! s:prefixmap.create_map_commands() " {{{2
+function! s:prefixedmap.create_map_commands() " {{{2
   let base_commands = ['map', 'nmap', 'vmap', 'xmap', 'smap', 'omap',
         \              'imap', 'lmap', 'cmap']
   let command_prefix = 'P'
@@ -100,20 +100,20 @@ function! s:prefixmap.create_map_commands() " {{{2
     let bang = command ==# 'map' ? '-bang' : ''
     " Map command.
     execute printf('command! -nargs=+ %s %s%s
-          \         call s:prefixmap.create_key_mapping(''%s'',''<bang>'', <q-args>)',
+          \         call s:prefixedmap.create_key_mapping(''%s'',''<bang>'', <q-args>)',
           \         bang, command_prefix, command, command)
     " Nore-map command.
     let nore_command = matchstr(command, '^\zs.*\zemap!\=') . 'noremap'
     execute printf('command! -nargs=+ %s %s%s
-          \         call s:prefixmap.create_key_mapping(''%s'',''<bang>'', <q-args>)',
+          \         call s:prefixedmap.create_key_mapping(''%s'',''<bang>'', <q-args>)',
           \         bang, command_prefix, nore_command, nore_command)
   endfor
 endfunction
 
 
-function! s:prefixmap.create_key_mapping(command_name, bang, command_arg) " {{{2
+function! s:prefixedmap.create_key_mapping(command_name, bang, command_arg) " {{{2
   if self.prefix_key == ''
-    echohl WarningMsg | echomsg s:create_error_message(':PrefixMapStart {prefix-key} is not executed.') | echohl None
+    echohl WarningMsg | echomsg s:create_error_message(':PrefixedMapStart {prefix-key} is not executed.') | echohl None
     return
   endif
 
@@ -159,7 +159,7 @@ endfunction
 
 " Init {{{1
 
-call s:prefixmap.__init__()
+call s:prefixedmap.__init__()
 
 
 

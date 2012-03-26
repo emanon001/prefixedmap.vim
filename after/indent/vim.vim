@@ -1,4 +1,4 @@
-" Vim additional indent settings: vim/prefixmap - indent prefixmap commands
+" Vim additional indent settings: vim/prefixedmap - indent prefixedmap commands
 " Version: 0.0.1
 " Author:  emanon001 <emanon001@gmail.com>
 " License: DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE, Version 2 {{{
@@ -9,23 +9,23 @@
 "     http://sam.zoy.org/wtfpl/COPYING for more details.
 " }}}
 
-let &l:indentexpr = 'GetVimPrefixMapIndent(' . &l:indentexpr . ')'
-setlocal indentkeys+==PrefixMapEnd
+let &l:indentexpr = 'GetVimPrefixedMapIndent(' . &l:indentexpr . ')'
+setlocal indentkeys+==PrefixedMapEnd
 
-if exists('*GetVimPrefixMapIndent')
+if exists('*GetVimPrefixedMapIndent')
   finish
 endif
 
-function GetVimPrefixMapIndent(base_indent)
+function GetVimPrefixedMapIndent(base_indent)
   let indent = a:base_indent
 
   let base_lnum = prevnonblank(v:lnum - 1)
   let line = getline(base_lnum)
-  if 0 <= match(line, '\(^\||\)\s*\(PrefixMapStart\)\>')
+  if 0 <= match(line, '\(^\||\)\s*\(PrefixedMapStart\)\>')
     let indent += &l:shiftwidth
   endif
 
-  if 0 <= match(getline(v:lnum), '\(^\||\)\s*\(PrefixMapEnd\)\>')
+  if 0 <= match(getline(v:lnum), '\(^\||\)\s*\(PrefixedMapEnd\)\>')
     let indent -= &l:shiftwidth
   endif
 
