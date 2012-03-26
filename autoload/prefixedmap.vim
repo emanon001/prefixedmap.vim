@@ -117,12 +117,17 @@ function! s:prefixedmap.create_key_mapping(command_name, bang, command_arg) " {{
     return
   endif
 
+  " 1. P{map-command} {map-arguments} <Nop>
+  "    -> {map-command} {map-arguments} {prefix-key} <Nop>
+  " 2. P{map-command} {map-arguments} {lhs} {rhs}
+  "    -> {map-command} {map-arguments} {lhs} {rhs}
   let map_arguments_pattern = '\%(' .
         \ join(['<buffer>', '<silent>', '<special>', '<script>', '<expr>', '<unique>'], '\|') .
         \ '\)'
   let _ = matchlist(a:command_arg, '^\(\%('. map_arguments_pattern . '\s*\)*\)\(.*\)$')
   execute a:command_name . a:bang _[1]
-        \ self.prefix_key . _[2]
+        \ _[2] ==# '<Nop>' ? self.prefix_key . ' <Nop>'
+        \                  : self.prefix_key . _[2]
 endfunction
 
 
@@ -155,6 +160,8 @@ function! s:parse_script_names() "{{2
   let infos = map(infos, 'matchlist(v:val, ''^\s*\(\d*\):\s*\(.*\)$'')[1:2]')
   return map(infos, '{"snr": v:val[0], "path": v:val[1]}')
 endfunction
+
+
 
 
 " Init {{{1
