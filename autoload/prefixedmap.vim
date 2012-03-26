@@ -73,7 +73,7 @@ endfunction
 
 
 function! s:prefixedmap.create_block_commands() " {{{2
-  command! -nargs=1 PrefixedMapStart
+  command! -nargs=1 PrefixedMapBegin
         \ call s:prefixedmap.set_prefix_key(<q-args>, expand('<sfile>'))
   command! -nargs=0 PrefixedMapEnd
         \ call s:prefixedmap.reset_prefix_key()
@@ -113,7 +113,7 @@ endfunction
 
 function! s:prefixedmap.create_key_mapping(command_name, bang, command_arg) " {{{2
   if self.prefix_key == ''
-    echohl WarningMsg | echomsg s:create_error_message(':PrefixedMapStart {prefix-key} is not executed.') | echohl None
+    echohl WarningMsg | echomsg s:create_error_message(':PrefixedMapBegin {prefix-key} is not executed.') | echohl None
     return
   endif
 

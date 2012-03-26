@@ -21,7 +21,7 @@ function GetVimPrefixedMapIndent(base_indent)
 
   let base_lnum = prevnonblank(v:lnum - 1)
   let line = getline(base_lnum)
-  if 0 <= match(line, '\(^\||\)\s*\(PrefixedMapStart\)\>')
+  if 0 <= match(line, '\(^\||\)\s*\(PrefixedMapBegin\)\>')
     let indent += &l:shiftwidth
   endif
 
