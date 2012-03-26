@@ -43,7 +43,7 @@ endfunction
 
 function! s:prefixmap.__init_variables__() " {{{3
   call extend(self, {
-        \  'is_loaded': 0,
+        \  'is_loaded': s:FALSE,
         \  'prefix_key': ''
         \ })
 endfunction
