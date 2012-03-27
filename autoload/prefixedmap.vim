@@ -82,9 +82,12 @@ endfunction
 function! s:prefixedmap.set_prefix_key(prefix_key, sfile) " {{{3
   try
     let self.sid = s:path_to_sid(a:sfile)
-  catch /^prefixedmap:/
+  catch /^prefixedmap: Convert/
     call s:print_error(v:exception)
     return
+  catch /^prefixedmap: Argument/
+    " Run on the command line.
+    call s:print_error(v:exception)
   endtry
   let self.prefix_key = self.expand_sid(a:prefix_key)
 endfunction
@@ -121,14 +124,15 @@ function! s:prefixedmap.create_key_mapping(command_name, bang, command_arg) " {{
 
   try
     let [map_arguments, lhs, rhs] = self.parse_command_arg(a:command_arg)
-  catch /^prefixedmap:/
+  catch /^prefixedmap: Parse/
     call s:print_error([v:exception, 'command is "' . a:command_name . a:bang . ' ' . a:command_arg . '"'])
     return
   endtry
   execute a:command_name . a:bang map_arguments lhs rhs
 endfunction
 
-function! s:prefixedmap.parse_command_arg(command_arg)
+
+function! s:prefixedmap.parse_command_arg(command_arg) " {{{2
   let map_arguments_pattern = '\%(' .
         \ join(['<buffer>', '<silent>', '<special>', '<script>', '<expr>', '<unique>'], '\|') .
         \ '\)'
@@ -137,7 +141,7 @@ function! s:prefixedmap.parse_command_arg(command_arg)
 
   if _lhs == '' || (_lhs !=# '<Nop>' && _rhs == '')
     " Invalid command arg.
-    throw s:create_exception_message('Invalid command arg.')
+    throw s:create_exception('Parse', 'Invalid command arg.')
   elseif _lhs ==# '<Nop>' && _rhs == ''
     " {map-arguments} <Nop>
     " -> {map-arguments} {prefix-key} <Nop>
@@ -157,32 +161,33 @@ endfunction
 
 " Misc {{{1
 
-function! s:create_exception_message(message) " {{{2
-  return printf('%s: %s', s:PLUGIN_NAME, a:message)
+function! s:create_exception(type, message) " {{{2
+  return printf('%s: %s: %s', s:PLUGIN_NAME, a:type, a:message)
 endfunction
 
 
 function! s:print_error(message) " {{{2
-  let messages = []
+  let head_messages = [printf('%s: %s', s:PLUGIN_NAME, 'The error occurred.')]
+  let main_messages = type(a:message) == type([]) ? copy(a:message) : [a:message]
+  " Remove prefix string of exception.
+  call map(main_messages,
+        \  'matchstr(v:val, ''^\%('' . s:PLUGIN_NAME . '': [^:]*:\)\=\s*\zs.*'')')
 
-  if type(a:message) == type([])
-    call extend(messages, a:message)
-  else
-    call add(messages, a:message)
-  endif
-
-  for _ in messages
+  for _ in head_messages + main_messages
     echohl WarningMsg | echomsg _ | echohl None
   endfor
 endfunction
 
 
 function! s:path_to_sid(path) "{{2
+  if a:path =~ '^\s*$'
+    throw s:create_exception('Argument', 'File path is empty.')
+  endif
+
   let snr_infos = s:parse_script_names()
   call filter(snr_infos, 'expand(v:val.path) ==# expand(a:path)')
-
   if empty(snr_infos) "{{2
-    throw s:create_exception_message('Could not convert the <SID>.')
+    throw s:create_exception('Convert', 'Could not convert from file path "' . a:path . '" to SID.')
   endif
   return printf('<SNR>%d_', snr_infos[0].snr)
 endfunction
