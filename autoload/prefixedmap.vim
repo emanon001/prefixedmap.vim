@@ -80,9 +80,13 @@ function! s:prefixedmap.create_block_commands() " {{{2
 endfunction
 
 function! s:prefixedmap.set_prefix_key(prefix_key, sfile) " {{{3
-  let self.sid = s:path_to_sid(a:sfile)
-  let actual_prefix_key = self.expand_sid(a:prefix_key)
-  let self.prefix_key = actual_prefix_key
+  try
+    let self.sid = s:path_to_sid(a:sfile)
+  catch /^prefixedmap:/
+    call s:print_error(v:exception)
+    return
+  endtry
+  let self.prefix_key = self.expand_sid(a:prefix_key)
 endfunction
 
 function! s:prefixedmap.reset_prefix_key() " {{{3
@@ -111,22 +115,30 @@ endfunction
 
 function! s:prefixedmap.create_key_mapping(command_name, bang, command_arg) " {{{2
   if self.prefix_key == ''
-    echohl WarningMsg | echomsg s:create_error_message(':PrefixedMapBegin {prefix-key} is not executed.') | echohl None
+    call s:print_error(':PrefixedMapBegin {prefix-key} is not executed.')
     return
   endif
 
-  let [map_arguments, lhs, rhs] = self.parse_command_arg(a:command_arg)
+  try
+    let [map_arguments, lhs, rhs] = self.parse_command_arg(a:command_arg)
+  catch /^prefixedmap:/
+    call s:print_error([v:exception, 'command is "' . a:command_name . a:bang . ' ' . a:command_arg . '"'])
+    return
+  endtry
   execute a:command_name . a:bang map_arguments lhs rhs
 endfunction
 
-function! s:prefixedmap.parse_command_arg(command_arg) " {{{2
+function! s:prefixedmap.parse_command_arg(command_arg)
   let map_arguments_pattern = '\%(' .
         \ join(['<buffer>', '<silent>', '<special>', '<script>', '<expr>', '<unique>'], '\|') .
         \ '\)'
-  let arg_info = matchlist(a:command_arg, '^\(\%('. map_arguments_pattern . '\s*\)*\)\(\%(\%(\%x16 \)\|\S\)*\)\s*\(.*\)$')
+  let [map_arguments, _lhs, _rhs] = matchlist(a:command_arg,
+        \ '^\(\%('. map_arguments_pattern . '\s*\)*\)\(\%(\%(\%x16 \)\|\S\)*\)\s*\(.*\)$')[1:3]
 
-  let map_arguments = arg_info[1]
-  if arg_info[2] ==# '<Nop>' && arg_info[3] == ''
+  if _lhs == '' || (_lhs !=# '<Nop>' && _rhs == '')
+    " Invalid command arg.
+    throw s:create_exception_message('Invalid command arg.')
+  elseif _lhs ==# '<Nop>' && _rhs == ''
     " {map-arguments} <Nop>
     " -> {map-arguments} {prefix-key} <Nop>
     let lhs = self.prefix_key
@@ -134,8 +146,8 @@ function! s:prefixedmap.parse_command_arg(command_arg) " {{{2
   else
     " {map-arguments} {lhs} {rhs}
     " -> {map-arguments} {prefix-key}{lhs} {rhs}
-    let lhs = self.prefix_key . arg_info[2]
-    let rhs = self.expand_sid(arg_info[3])
+    let lhs = self.prefix_key . _lhs
+    let rhs = self.expand_sid(_rhs)
   endif
   return [map_arguments, lhs, rhs]
 endfunction
@@ -145,8 +157,23 @@ endfunction
 
 " Misc {{{1
 
-function! s:create_error_message(message) " {{{2
+function! s:create_exception_message(message) " {{{2
   return printf('%s: %s', s:PLUGIN_NAME, a:message)
+endfunction
+
+
+function! s:print_error(message) " {{{2
+  let messages = []
+
+  if type(a:message) == type([])
+    call extend(messages, a:message)
+  else
+    call add(messages, a:message)
+  endif
+
+  for _ in messages
+    echohl WarningMsg | echomsg _ | echohl None
+  endfor
 endfunction
 
 
@@ -155,7 +182,7 @@ function! s:path_to_sid(path) "{{2
   call filter(snr_infos, 'expand(v:val.path) ==# expand(a:path)')
 
   if empty(snr_infos) "{{2
-    throw s:create_error_message('Could not convert the <SID>.')
+    throw s:create_exception_message('Could not convert the <SID>.')
   endif
   return printf('<SNR>%d_', snr_infos[0].snr)
 endfunction
