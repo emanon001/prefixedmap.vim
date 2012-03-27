@@ -119,11 +119,11 @@ function! s:prefixedmap.create_key_mapping(command_name, bang, command_arg) " {{
   execute a:command_name . a:bang map_arguments lhs rhs
 endfunction
 
-function! s:prefixedmap.parse_command_arg(command_arg)
+function! s:prefixedmap.parse_command_arg(command_arg) " {{{2
   let map_arguments_pattern = '\%(' .
         \ join(['<buffer>', '<silent>', '<special>', '<script>', '<expr>', '<unique>'], '\|') .
         \ '\)'
-  let arg_info = matchlist(a:command_arg, '^\(\%('. map_arguments_pattern . '\s*\)*\)\(\%(\%( \)\|\S\)*\)\s*\(.*\)$')
+  let arg_info = matchlist(a:command_arg, '^\(\%('. map_arguments_pattern . '\s*\)*\)\(\%(\%(\%x16 \)\|\S\)*\)\s*\(.*\)$')
 
   let map_arguments = arg_info[1]
   if arg_info[2] ==# '<Nop>' && arg_info[3] == ''
