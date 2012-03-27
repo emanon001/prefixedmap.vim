@@ -86,8 +86,9 @@ function! s:prefixedmap.set_prefix_key(prefix_key, sfile) " {{{3
     call s:print_error(v:exception)
     return
   catch /^prefixedmap: Argument/
-    " Run on the command line.
-    call s:print_error(v:exception)
+    " TODO: Run on the command line.
+    call s:print_error('Can not be used from the command line.')
+    return
   endtry
   let self.prefix_key = self.expand_sid(a:prefix_key)
 endfunction
