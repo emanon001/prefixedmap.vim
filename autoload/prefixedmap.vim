@@ -180,21 +180,21 @@ function! s:print_error(message) " {{{2
 endfunction
 
 
-function! s:path_to_sid(path) "{{2
+function! s:path_to_sid(path) "{{{2
   if a:path =~ '^\s*$'
     throw s:create_exception('Argument', 'File path is empty.')
   endif
 
   let snr_infos = s:parse_script_names()
   call filter(snr_infos, 'expand(v:val.path) ==# expand(a:path)')
-  if empty(snr_infos) "{{2
+  if empty(snr_infos)
     throw s:create_exception('Convert', 'Could not convert from file path "' . a:path . '" to SID.')
   endif
   return printf('<SNR>%d_', snr_infos[0].snr)
 endfunction
 
 
-function! s:parse_script_names() "{{2
+function! s:parse_script_names() "{{{2
   redir => _
   silent! scriptnames
   redir END
