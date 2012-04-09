@@ -55,9 +55,8 @@ endfunction
 " Interface {{{1
 
 function! prefixedmap#load() " {{{2
-  if !s:prefixedmap.is_loaded
-    call s:prefixedmap.create_commands()
-    let s:prefixedmap.is_loaded = s:TRUE
+  if !s:prefixedmap.loaded_p()
+    call s:prefixedmap.load()
   endif
 endfunction
 
@@ -65,6 +64,12 @@ endfunction
 
 
 " Core {{{1
+
+function! s:prefixedmap.load() " {{{2
+  call self.create_commands()
+  let self.is_loaded = s:TRUE
+endfunction
+
 
 function! s:prefixedmap.create_commands() " {{{2
   call self.create_block_commands()
@@ -90,7 +95,7 @@ function! s:prefixedmap.set_prefix_key(prefix_key, sfile) " {{{3
     call s:print_error('Can not be used from the command line.')
     return
   endtry
-  let self.prefix_key = self.expand_sid(a:prefix_key)
+  let self.prefix_key = s:expand_sid(a:prefix_key, self.sid)
 endfunction
 
 function! s:prefixedmap.reset_prefix_key() " {{{3
@@ -152,9 +157,14 @@ function! s:prefixedmap.parse_command_arg(command_arg) " {{{2
     " {map-arguments} {lhs} {rhs}
     " -> {map-arguments} {prefix-key}{lhs} {rhs}
     let lhs = self.prefix_key . _lhs
-    let rhs = self.expand_sid(_rhs)
+    let rhs = s:expand_sid(_rhs, self.sid)
   endif
   return [map_arguments, lhs, rhs]
+endfunction
+
+
+function! s:prefixedmap.loaded_p() " {{{2
+  return self.is_loaded
 endfunction
 
 
@@ -205,9 +215,9 @@ function! s:parse_script_names() "{{{2
 endfunction
 
 
-function! s:prefixedmap.expand_sid(val) " {{{2
+function! s:expand_sid(val, sid) " {{{2
   " XXX:
-  return substitute(a:val, '<SID>', self.sid, 'g')
+  return substitute(a:val, '<SID>', a:sid, 'g')
 endfunction
 
 
