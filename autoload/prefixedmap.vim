@@ -100,6 +100,7 @@ endfunction
 
 function! s:prefixedmap.end() " {{{3
   let self.prefix_key = ''
+  let self.sid = ''
 endfunction
 
 
