@@ -79,12 +79,12 @@ endfunction
 
 function! s:prefixedmap.create_block_commands() " {{{2
   command! -nargs=1 PrefixedMapBegin
-        \ call s:prefixedmap.set_prefix_key(<q-args>, expand('<sfile>'))
+        \ call s:prefixedmap.begin(<q-args>, expand('<sfile>'))
   command! -nargs=0 PrefixedMapEnd
-        \ call s:prefixedmap.reset_prefix_key()
+        \ call s:prefixedmap.end()
 endfunction
 
-function! s:prefixedmap.set_prefix_key(prefix_key, sfile) " {{{3
+function! s:prefixedmap.begin(prefix_key, sfile) " {{{3
   try
     let self.sid = s:path_to_sid(a:sfile)
   catch /^prefixedmap: Convert/
@@ -98,7 +98,7 @@ function! s:prefixedmap.set_prefix_key(prefix_key, sfile) " {{{3
   let self.prefix_key = s:expand_sid(a:prefix_key, self.sid)
 endfunction
 
-function! s:prefixedmap.reset_prefix_key() " {{{3
+function! s:prefixedmap.end() " {{{3
   let self.prefix_key = ''
 endfunction
 
