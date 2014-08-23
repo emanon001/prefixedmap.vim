@@ -1,5 +1,5 @@
 " Vim additional indent settings: vim/prefixedmap - indent prefixedmap commands
-" Version: 0.0.1
+" Version: 0.1.0
 " Author:  emanon001 <emanon001@gmail.com>
 " License: DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE, Version 2 {{{
 "     This program is free software. It comes without any warranty, to
